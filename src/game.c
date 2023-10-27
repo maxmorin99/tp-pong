@@ -31,6 +31,7 @@ static float dist_ai_ball = {FLT_MAX};
 
 static Vector2 paddle_dims = {.x=10,.y=40};
 
+#define MAX_SCORE 50
 #define REWARD_CLOSE +10
 #define REWARD_FAR -10
 
@@ -301,7 +302,6 @@ void game_restart(void){
 	paddle[1].w = paddle_dims.x;
 	paddle[1].h = paddle_dims.y;
 
-	// maybe add extra steps
 	dist_ai_ball = 0.f;
 }
 
@@ -313,7 +313,10 @@ void game_restart(void){
  */
 void game_apply_move( uint8_t move)
 {
+	// Early return if the action == IDLE
     if(move == IDLE) return;
+
+	// Move paddle depending on action.
 	switch(move)
 	{
 		case UP:
@@ -335,7 +338,10 @@ void game_apply_move( uint8_t move)
  */
 bool game_is_ended(void)
 {
-    if(score[0] == 50 || score[1] == 3)
+	/* 
+	*	If either one of the AI paddle reached MAX_SCORE, return true to restart the game
+	*/
+    if(score[0] == MAX_SCORE || score[1] == MAX_SCORE)
 	{
 		score[0] = 0;
 		score[1] = 0;
@@ -351,6 +357,13 @@ bool game_is_ended(void)
  */
 uint16_t game_get_state(void)
 {
+	/**
+	 * state represents the state of the paddle in relation to the ball.
+	 * Bit 0 informs whether the y of the ball is > than the y of the paddle.
+	 * Bit 1 informs whether the y of the ball is < than the y of the paddle.
+	 * Bit 2 informs if the x of the ball is > than the x of the paddle.
+	 * Bit 3 informs if the x of the ball is < than the x of the paddle.
+	*/
 	paddle_t p = paddle[1];
 
 	uint8_t state = 0;
@@ -369,8 +382,15 @@ uint16_t game_get_state(void)
  */
 int16_t game_get_reward(void)
 {
+
+	// Get the distance between the ball and the paddle this frame.
 	Vector2 dist_vec = {ball.x - paddle[1].x, ball.y - paddle[1].y};
     float curr_dist = sqrt(pow(dist_vec.x, 2) + pow(dist_vec.y, 2));
+
+	/**
+	 * If the current distance < last frame distance, give reward CLOSE, otherwise FAR.
+	 * dist_ai_ball is updated every frame in draw() function.
+	*/
 	if(curr_dist < dist_ai_ball)
 	{
 		return REWARD_CLOSE;

@@ -5,9 +5,7 @@ typedef enum move
 {
     IDLE,
     UP,
-    DOWN,
-    LEFT,
-    RIGHT
+    DOWN
 } game_move_t;
 
 /**
